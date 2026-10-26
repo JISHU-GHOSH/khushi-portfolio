@@ -8,8 +8,8 @@ const BG_COLOR = '#9c474f';
 const FACE_CENTER_X = 0.50;
 const FACE_CENTER_Y = 0.38;
 
-const FRAME_LERP = 0.22;
-const MAX_FRAME_STEP = 2.8;
+const FRAME_LERP = 0.15;
+const MAX_FRAME_STEP = 1.0;
 const ASPECT_RATIO = 1920 / 1080;
 
 export {
@@ -37,6 +37,8 @@ export default function CharacterCanvas({ className = 'character-canvas' }) {
     rafId: null,
     mouseX: FACE_CENTER_X,
     mouseY: FACE_CENTER_Y,
+    targetMouseX: FACE_CENTER_X,
+    targetMouseY: FACE_CENTER_Y,
     isReady: false,
   });
 
@@ -84,8 +86,8 @@ export default function CharacterCanvas({ className = 'character-canvas' }) {
 
     const onMove = (e) => {
       if (window.innerWidth > 0 && window.innerHeight > 0) {
-        s.mouseX = e.clientX / window.innerWidth;
-        s.mouseY = e.clientY / window.innerHeight;
+        s.targetMouseX = e.clientX / window.innerWidth;
+        s.targetMouseY = e.clientY / window.innerHeight;
       }
     };
 
@@ -94,8 +96,8 @@ export default function CharacterCanvas({ className = 'character-canvas' }) {
       if (e.touches && e.touches[0] && window.innerWidth > 0 && window.innerHeight > 0) {
         isTouching = true;
         if (touchReturnRaf) cancelAnimationFrame(touchReturnRaf);
-        s.mouseX = e.touches[0].clientX / window.innerWidth;
-        s.mouseY = e.touches[0].clientY / window.innerHeight;
+        s.targetMouseX = e.touches[0].clientX / window.innerWidth;
+        s.targetMouseY = e.touches[0].clientY / window.innerHeight;
       }
     };
 
@@ -103,8 +105,8 @@ export default function CharacterCanvas({ className = 'character-canvas' }) {
       if (window.scrollY > window.innerHeight * 0.8) return;
       if (e.touches && e.touches[0] && window.innerWidth > 0 && window.innerHeight > 0) {
         isTouching = true;
-        s.mouseX = e.touches[0].clientX / window.innerWidth;
-        s.mouseY = e.touches[0].clientY / window.innerHeight;
+        s.targetMouseX = e.touches[0].clientX / window.innerWidth;
+        s.targetMouseY = e.touches[0].clientY / window.innerHeight;
       }
     };
 
@@ -114,15 +116,15 @@ export default function CharacterCanvas({ className = 'character-canvas' }) {
 
       function driftToCenter() {
         if (isTouching) return;
-        const dx = FACE_CENTER_X - s.mouseX;
-        const dy = FACE_CENTER_Y - s.mouseY;
+        const dx = FACE_CENTER_X - s.targetMouseX;
+        const dy = FACE_CENTER_Y - s.targetMouseY;
         if (Math.abs(dx) > 0.005 || Math.abs(dy) > 0.005) {
-          s.mouseX += dx * 0.12;
-          s.mouseY += dy * 0.12;
+          s.targetMouseX += dx * 0.12;
+          s.targetMouseY += dy * 0.12;
           touchReturnRaf = requestAnimationFrame(driftToCenter);
         } else {
-          s.mouseX = FACE_CENTER_X;
-          s.mouseY = FACE_CENTER_Y;
+          s.targetMouseX = FACE_CENTER_X;
+          s.targetMouseY = FACE_CENTER_Y;
         }
       }
       if (touchReturnRaf) cancelAnimationFrame(touchReturnRaf);
@@ -186,6 +188,11 @@ export default function CharacterCanvas({ className = 'character-canvas' }) {
       const H = window.innerHeight;
       if (W <= 0 || H <= 0) return;
 
+      // Exponential smoothing on mouse pointer coordinates to eliminate micro-jitter
+      const pointerLerp = 1 - Math.pow(1 - 0.22, dt);
+      s.mouseX += (s.targetMouseX - s.mouseX) * pointerLerp;
+      s.mouseY += (s.targetMouseY - s.mouseY) * pointerLerp;
+
       const faceCX = W * FACE_CENTER_X;
       const faceCY = H * FACE_CENTER_Y;
 
@@ -209,7 +216,11 @@ export default function CharacterCanvas({ className = 'character-canvas' }) {
 
       const lf = 1 - Math.pow(1 - FRAME_LERP, dt);
       const absDiff = Math.abs(diff);
-      const step = Math.sign(diff) * Math.min(absDiff * Math.max(lf, 0.20), MAX_FRAME_STEP);
+
+      // Two-phase tracking: rapid tracking with smooth 3-frame deceleration (prevents frame skipping)
+      const step = absDiff > 3
+        ? Math.sign(diff) * MAX_FRAME_STEP
+        : Math.sign(diff) * Math.min(absDiff * lf, MAX_FRAME_STEP);
 
       s.smoothFrame = ((s.smoothFrame + step) % NUM_FRAMES + NUM_FRAMES) % NUM_FRAMES;
       const frameIdx = Math.round(s.smoothFrame) % NUM_FRAMES;

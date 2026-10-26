@@ -44,8 +44,8 @@ const requiredTokens = [
   "BG_COLOR = '#9c474f'",
   'FACE_CENTER_X = 0.50',
   'FACE_CENTER_Y = 0.38',
-  'FRAME_LERP = 0.22',
-  'MAX_FRAME_STEP = 2.8',
+  'FRAME_LERP = 0.15',
+  'MAX_FRAME_STEP = 1.0',
   'ASPECT_RATIO = 1920 / 1080',
   'export default function CharacterCanvas',
   'aria-label="Interactive character tracking cursor movement"',
@@ -96,8 +96,8 @@ console.assert(mod.DEADZONE_RADIUS === 0.12, 'DEADZONE_RADIUS should be 0.12');
 console.assert(mod.BG_COLOR === '#9c474f', 'BG_COLOR should be #9c474f');
 console.assert(mod.FACE_CENTER_X === 0.50, 'FACE_CENTER_X should be 0.50');
 console.assert(mod.FACE_CENTER_Y === 0.38, 'FACE_CENTER_Y should be 0.38');
-console.assert(mod.FRAME_LERP === 0.22, 'FRAME_LERP should be 0.22');
-console.assert(mod.MAX_FRAME_STEP === 2.8, 'MAX_FRAME_STEP should be 2.8');
+console.assert(mod.FRAME_LERP === 0.15, 'FRAME_LERP should be 0.15');
+console.assert(mod.MAX_FRAME_STEP === 1.0, 'MAX_FRAME_STEP should be 1.0');
 console.assert(Math.abs(mod.ASPECT_RATIO - (1920 / 1080)) < 1e-6, 'ASPECT_RATIO should be 1920/1080');
 console.log('PASS: Module exports and runtime constants verified');
 
