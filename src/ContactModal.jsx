@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, CheckCircle } from 'lucide-react';
 import { sounds } from './soundEffects';
 import './ContactModal.css';
@@ -6,6 +6,7 @@ import './ContactModal.css';
 export default function ContactModal({ onClose }) {
   const [submitted, setSubmitted] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  const timerRef = useRef(null);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -18,6 +19,7 @@ export default function ContactModal({ onClose }) {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       if (typeof document !== 'undefined') document.body.style.overflow = prev;
+      if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [onClose]);
 
@@ -25,7 +27,7 @@ export default function ContactModal({ onClose }) {
     e.preventDefault();
     sounds.playChime();
     setSubmitted(true);
-    setTimeout(() => {
+    timerRef.current = setTimeout(() => {
       onClose();
     }, 2500);
   };

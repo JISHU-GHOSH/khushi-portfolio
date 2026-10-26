@@ -1,6 +1,6 @@
 // src/AboutSection.jsx
 import React from 'react';
-import { Code, Terminal, Layers, Heart, Sparkles, FileText, Send } from 'lucide-react';
+import { Code, Terminal, Layers, Sparkles, FileText, Send } from 'lucide-react';
 import { sounds } from './soundEffects';
 import useScrollReveal from './useScrollReveal';
 import './AboutSection.css';

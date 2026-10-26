@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { X, Printer, Download, Github, Mail, Globe } from 'lucide-react';
+import { X, Printer, Github, Mail, Globe } from 'lucide-react';
 import { sounds } from './soundEffects';
 import './ResumeModal.css';
 

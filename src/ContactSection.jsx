@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Github, Check, ArrowUpRight, Send, Heart } from 'lucide-react';
+import { Mail, Github, Check, ArrowUpRight, Send } from 'lucide-react';
 import { sounds } from './soundEffects';
 import './ContactSection.css';
 
