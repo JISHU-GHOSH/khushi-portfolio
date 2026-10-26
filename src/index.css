@@ -47,3 +47,14 @@ button {
   border: none;
   background: none;
 }
+
+.projects-section, .about-section {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.8s var(--ease-luxury), transform 0.8s var(--ease-luxury);
+}
+.projects-section.is-revealed, .about-section.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+

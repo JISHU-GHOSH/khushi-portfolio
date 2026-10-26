@@ -7,7 +7,7 @@ import { sounds } from './soundEffects';
 import './HeroSection.css';
 
 export default function HeroSection({ onOpenContact, onOpenResume, children }) {
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(() => sounds.muted);
 
   const toggleSound = () => {
     const isMuted = sounds.toggleMute();

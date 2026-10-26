@@ -3,7 +3,7 @@ import numpy as np
 import os
 import sys
 
-VIDEO_PATH = r"C:\khushi_porfolio\Character_tracking_mouse_cursor_1080p_20261026042114.mp4"
+VIDEO_PATH = sys.argv[1] if len(sys.argv) > 1 else r"C:\khushi_porfolio\Character_tracking_mouse_cursor_1080p_20261026042114.mp4"
 OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "public", "frames")
 os.makedirs(OUT_DIR, exist_ok=True)
 

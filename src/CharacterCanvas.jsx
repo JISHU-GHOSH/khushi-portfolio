@@ -171,6 +171,11 @@ export default function CharacterCanvas({ className = 'character-canvas' }) {
     let last = -1;
 
     function render(ts) {
+      if (window.scrollY > window.innerHeight * 1.2) {
+        s.rafId = requestAnimationFrame(render);
+        return;
+      }
+
       s.rafId = requestAnimationFrame(render);
 
       if (last < 0) last = ts;

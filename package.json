@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node scripts/test_scaffolding.mjs && node scripts/test_canvas.mjs && node scripts/test_hero.mjs && node scripts/test_projects.mjs && node scripts/test_about.mjs && node scripts/test_app.mjs && python scripts/test_frames.py"
   },
   "dependencies": {
     "lucide-react": "^0.475.0",
