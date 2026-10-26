@@ -163,8 +163,12 @@ export default function CharacterCanvas({ className = 'character-canvas' }) {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.round(W * dpr);
       canvas.height = Math.round(H * dpr);
+      canvas.style.width = `${W}px`;
+      canvas.style.height = `${H}px`;
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
     }
 
     resize();

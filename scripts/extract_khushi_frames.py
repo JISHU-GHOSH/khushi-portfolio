@@ -7,6 +7,34 @@ VIDEO_PATH = sys.argv[1] if len(sys.argv) > 1 else r"C:\khushi_porfolio\Characte
 OUT_DIR = os.path.join(os.path.dirname(__file__), "..", "public", "frames")
 os.makedirs(OUT_DIR, exist_ok=True)
 
+# 64-frame counter-clockwise continuous circular mapping from pure raw 1080p video frames:
+# 0..7:   RIGHT (0 deg) -> UP-RIGHT (45 deg)
+# 8..15:  UP-RIGHT (45 deg) -> UP (90 deg)
+# 16..23: UP (90 deg) -> UP-LEFT (135 deg)
+# 24..31: UP-LEFT (135 deg) -> LEFT (180 deg)
+# 32..39: LEFT (180 deg) -> DOWN-LEFT (225 deg)
+# 40..47: DOWN-LEFT (225 deg) -> DOWN (270 deg)
+# 48..55: DOWN (270 deg) -> DOWN-RIGHT (315 deg)
+# 56..63: DOWN-RIGHT (315 deg) -> RIGHT (360 deg)
+raw_map = [
+    # 0..7: 0 to 45 deg (Right -> Up-Right)
+    185, 184, 183, 182, 181, 180, 178, 177,
+    # 8..15: 45 to 90 deg (Up-Right -> Up)
+    176, 176, 175, 175, 174, 174, 173, 172,
+    # 16..23: 90 to 135 deg (Up -> Up-Left)
+    172, 171, 170, 169, 168, 162, 156, 150,
+    # 24..31: 135 to 180 deg (Up-Left -> Left)
+    144, 138, 136, 134, 133, 132, 131, 130,
+    # 32..39: 180 to 225 deg (Left -> Down-Left)
+    129, 128, 126, 124, 122, 120, 116, 110,
+    # 40..47: 225 to 270 deg (Down-Left -> Down)
+    106, 104, 102, 100,  99,  98,  97,  96,
+    # 48..55: 270 to 315 deg (Down -> Down-Right)
+     95,  94,  93,  92,  90,  84,  78,  76,
+    # 56..63: 315 to 360 deg (Down-Right -> Right)
+     70,  66,  62,  60, 194, 190, 188, 186
+]
+
 def inpaint_watermark(img):
     mask = np.zeros(img.shape[:2], dtype=np.uint8)
     # Kling AI sparkle watermark region in bottom-right quadrant
@@ -18,89 +46,31 @@ if not cap.isOpened():
     print(f"Error opening video: {VIDEO_PATH}")
     sys.exit(1)
 
-frames = []
+all_frames = {}
+frame_idx = 0
+needed_indices = set(raw_map)
+needed_indices.add(0) # Center direct eye-contact frame
+
 while True:
     ret, frame = cap.read()
     if not ret: break
-    frames.append(frame)
+    if frame_idx in needed_indices:
+        all_frames[frame_idx] = frame
+    frame_idx += 1
 cap.release()
 
-print(f"Loaded {len(frames)} video frames from {VIDEO_PATH}.")
+print(f"Loaded {len(all_frames)} needed video frames.")
 
-# Inpaint key anchor frames
-anchors_def = [
-    ( 0, 185), # Right (0 deg)
-    ( 8, 176), # Up-Right (45 deg)
-    (16, 174), # Up (90 deg)
-    (24, 171), # Up-Left (135 deg)
-    (28, 150), # 157.5 deg
-    (32, 130), # Left (180 deg)
-    (36, 115), # 202.5 deg
-    (40, 100), # Down-Left (225 deg)
-    (48,  96), # Down (270 deg)
-    (52,  86), # 292.5 deg
-    (56,  76), # Down-Right (315 deg)
-    (60,  60), # 337.5 deg
-    (61, 194), # bridge
-    (62, 190), # 350 deg
-    (63, 187), # 356 deg
-    (64, 185)  # Right (360 deg)
-]
-
-inpainted_anchors = []
-for slot, f_idx in anchors_def:
-    cleaned = inpaint_watermark(frames[f_idx])
-    inpainted_anchors.append((slot, cleaned))
-
-dis = cv2.DISOpticalFlow.create(cv2.DISOPTICAL_FLOW_PRESET_MEDIUM)
-
-def morph_pair(f1, f2, alpha):
-    if alpha <= 0.001: return f1.copy()
-    if alpha >= 0.999: return f2.copy()
-    g1 = cv2.cvtColor(f1, cv2.COLOR_BGR2GRAY)
-    g2 = cv2.cvtColor(f2, cv2.COLOR_BGR2GRAY)
-    flow_fwd = dis.calc(g1, g2, None)
-    flow_bwd = dis.calc(g2, g1, None)
-    h, w = f1.shape[:2]
-    gx, gy = np.meshgrid(np.arange(w), np.arange(h))
-    
-    map1_x = (gx + alpha * flow_fwd[..., 0]).astype(np.float32)
-    map1_y = (gy + alpha * flow_fwd[..., 1]).astype(np.float32)
-    w1 = cv2.remap(f1, map1_x, map1_y, cv2.INTER_LINEAR)
-    
-    map2_x = (gx + (1 - alpha) * flow_bwd[..., 0]).astype(np.float32)
-    map2_y = (gy + (1 - alpha) * flow_bwd[..., 1]).astype(np.float32)
-    w2 = cv2.remap(f2, map2_x, map2_y, cv2.INTER_LINEAR)
-    
-    return cv2.addWeighted(w1, 1.0 - alpha, w2, alpha, 0)
-
-print("Synthesizing 64 seamless circular frames with DIS optical flow...")
-seq_64 = []
-for a_idx in range(len(inpainted_anchors) - 1):
-    s_slot, img_s = inpainted_anchors[a_idx]
-    e_slot, img_e = inpainted_anchors[a_idx + 1]
-    n_steps = e_slot - s_slot
-    for step in range(n_steps):
-        alpha = step / float(n_steps)
-        seq_64.append(morph_pair(img_s, img_e, alpha))
-
-print(f"Generated {len(seq_64)} directional frames. Saving WebP files to {OUT_DIR}...")
-for i, frame in enumerate(seq_64):
+# Save 64 directional raw WebP frames (Quality 96 for pin-sharp pristine 1080p rendering)
+for i, f_num in enumerate(raw_map):
+    raw = all_frames[f_num]
+    cleaned = inpaint_watermark(raw)
     out_path = os.path.join(OUT_DIR, f"{i:03d}.webp")
-    cv2.imwrite(out_path, frame, [cv2.IMWRITE_WEBP_QUALITY, 92])
+    cv2.imwrite(out_path, cleaned, [cv2.IMWRITE_WEBP_QUALITY, 96])
 
-# Center neutral eye-contact frame (Frame 0)
-center_cleaned = inpaint_watermark(frames[0])
-cv2.imwrite(os.path.join(OUT_DIR, "center.webp"), center_cleaned, [cv2.IMWRITE_WEBP_QUALITY, 92])
+# Save neutral eye-contact frame (Frame 0)
+raw_center = all_frames[0]
+cleaned_center = inpaint_watermark(raw_center)
+cv2.imwrite(os.path.join(OUT_DIR, "center.webp"), cleaned_center, [cv2.IMWRITE_WEBP_QUALITY, 96])
 
-print("Finished saving frames. Running continuity diff report...")
-diffs = [np.mean(cv2.absdiff(seq_64[i], seq_64[(i+1)%64])) for i in range(64)]
-print(f"64-frame Diff Summary:")
-print(f"  Mean diff: {np.mean(diffs):.2f}")
-print(f"  Min diff:  {np.min(diffs):.2f}")
-print(f"  Max diff:  {np.max(diffs):.2f}")
-for i in range(64):
-    if diffs[i] > 6.0:
-        print(f"  Warning: Step {i:02d} -> {(i+1)%64:02d} has diff {diffs[i]:.2f}")
-
-print("Frame extraction and inpainting complete!")
+print(f"Successfully saved 64 RAW 1080p WebP frames + center.webp into {OUT_DIR}")
