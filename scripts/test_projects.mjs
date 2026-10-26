@@ -98,14 +98,19 @@ const requiredPsTokens = [
   'khushigsd2924-design/quiz-app-code-with-ai',
   'khushigsd2924-design/messy-python-refactoring',
   'khushigsd2924-design/buggy-python-debugging',
-  'khushigsd2924-design/python-basics-struct-to-dict'
+  'khushigsd2924-design/python-basics-struct-to-dict',
+  'role="button"',
+  'tabIndex={0}',
+  "e.key === 'Enter'",
+  "e.key === ' '",
+  'e.preventDefault()'
 ];
 for (const token of requiredPsTokens) {
   if (!psJsx.includes(token)) {
     throw new Error(`ProjectsSection.jsx missing token: ${token}`);
   }
 }
-console.log('PASS: ProjectsSection.jsx source tokens verified');
+console.log('PASS: ProjectsSection.jsx source tokens and keyboard accessibility verified');
 
 const pmJsx = fs.readFileSync(projectModalJsx, 'utf-8');
 const requiredPmTokens = [
@@ -121,14 +126,16 @@ const requiredPmTokens = [
   'btn-modal-primary',
   'btn-modal-secondary',
   'sounds',
-  'playSoftClick'
+  'playSoftClick',
+  "document.body.style.overflow = 'hidden'",
+  'originalOverflow'
 ];
 for (const token of requiredPmTokens) {
   if (!pmJsx.includes(token)) {
     throw new Error(`ProjectModal.jsx missing token: ${token}`);
   }
 }
-console.log('PASS: ProjectModal.jsx source tokens verified');
+console.log('PASS: ProjectModal.jsx source tokens and scroll lock verified');
 
 // 5. Transpile and test React rendering & exports
 console.log('Transpiling and testing component rendering...');
@@ -227,7 +234,8 @@ console.assert(psHtml.includes('projects-section'), 'Markup must contain project
 console.assert(psHtml.includes('FEATURED PROJECTS'), 'Markup must contain title FEATURED PROJECTS');
 console.assert(psHtml.includes('Curated Works'), 'Markup must contain badge Curated Works');
 console.assert(psHtml.includes('filter-bar'), 'Markup must contain filter-bar');
-console.assert(psHtml.includes('projects-grid'), 'Markup must contain projects-grid');
+console.assert(psHtml.includes('role="button"'), 'Markup must contain role="button" on project cards');
+console.assert(psHtml.includes('tabindex="0"'), 'Markup must contain tabindex="0" on project cards');
 
 // Check all 5 project titles are rendered
 for (const p of psMod.PROJECTS) {

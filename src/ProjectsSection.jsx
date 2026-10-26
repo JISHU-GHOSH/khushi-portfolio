@@ -150,7 +150,15 @@ export default function ProjectsSection() {
               <div
                 key={project.id}
                 className="project-card"
+                role="button"
+                tabIndex={0}
                 onClick={() => handleOpenModal(project)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleOpenModal(project);
+                  }
+                }}
               >
                 <div className="card-top">
                   <div className="card-icon">
@@ -173,7 +181,11 @@ export default function ProjectsSection() {
 
                 <div className="card-footer">
                   <span className="card-details-btn">View Details &rarr;</span>
-                  <div className="card-actions" onClick={(e) => e.stopPropagation()}>
+                  <div
+                    className="card-actions"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  >
                     <a
                       href={project.github}
                       target="_blank"
