@@ -5,9 +5,11 @@ import AboutSection from './AboutSection';
 import ContactSection from './ContactSection';
 import ContactModal from './ContactModal';
 import ResumeModal from './ResumeModal';
+import useLenis from './useLenis.js';
 import './index.css';
 
 export default function App() {
+  useLenis();
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isResumeOpen, setIsResumeOpen] = useState(false);
 

@@ -18,7 +18,22 @@ export default function HeroSection({ onOpenContact, onOpenResume, children }) {
   const scrollToProjects = () => {
     sounds.playSoftClick();
     const el = document.getElementById('projects');
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
+    if (window.__lenis) {
+      window.__lenis.scrollTo(el, { duration: 1.2, offset: 0 });
+    } else if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const scrollToId = (e, id) => {
+    e.preventDefault();
+    sounds.playSoftClick();
+    const el = document.getElementById(id);
+    if (window.__lenis) {
+      window.__lenis.scrollTo(el, { duration: 1.2, offset: 0 });
+    } else if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
@@ -37,8 +52,8 @@ export default function HeroSection({ onOpenContact, onOpenResume, children }) {
           </a>
 
           <div className="nav-links">
-            <a href="#projects" onClick={() => sounds.playSoftClick()}>Projects</a>
-            <a href="#about" onClick={() => sounds.playSoftClick()}>About</a>
+            <a href="#projects" onClick={(e) => scrollToId(e, 'projects')}>Projects</a>
+            <a href="#about" onClick={(e) => scrollToId(e, 'about')}>About</a>
             <button
               onClick={() => {
                 sounds.playChime();

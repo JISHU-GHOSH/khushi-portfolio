@@ -10,6 +10,7 @@
     "test": "node scripts/test_scaffolding.mjs && node scripts/test_canvas.mjs && node scripts/test_hero.mjs && node scripts/test_projects.mjs && node scripts/test_about.mjs && node scripts/test_app.mjs && python scripts/test_frames.py"
   },
   "dependencies": {
+    "lenis": "^1.3.27",
     "lucide-react": "^0.475.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

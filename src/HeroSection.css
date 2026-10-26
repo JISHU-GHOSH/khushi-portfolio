@@ -219,20 +219,49 @@
   font-family: var(--font-mono);
   font-size: 0.7rem;
   letter-spacing: 0.2em;
+  transition: all 0.3s var(--ease-luxury);
+}
+
+.scroll-indicator:hover {
+  color: var(--accent-gold);
+  transform: translateY(2px);
 }
 
 .scroll-line {
-  width: 1px;
-  height: 40px;
-  background: linear-gradient(to bottom, var(--accent-gold), transparent);
-  animation: scrollPulse 2s infinite ease-in-out;
+  position: relative;
+  width: 2px;
+  height: 42px;
+  background: rgba(227, 181, 190, 0.2);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.scroll-line::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, transparent 0%, var(--accent-gold) 50%, transparent 100%);
+  animation: scrollPulse 2.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
 }
 
 @keyframes scrollPulse {
-  0% { transform: scaleY(0); transform-origin: top; }
-  50% { transform: scaleY(1); transform-origin: top; }
-  50.1% { transform: scaleY(1); transform-origin: bottom; }
-  100% { transform: scaleY(0); transform-origin: bottom; }
+  0% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
 }
 
 @media (max-width: 768px) {
