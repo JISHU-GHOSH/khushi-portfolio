@@ -1,0 +1,79 @@
+/* src/ContactModal.css */
+.contact-modal-content {
+  background: #200a10;
+  border: 1px solid rgba(227, 181, 190, 0.25);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 520px;
+  padding: 36px;
+  position: relative;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+  animation: scaleUp 0.3s var(--ease-luxury);
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 0.82rem;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  color: var(--accent-gold);
+  letter-spacing: 0.05em;
+}
+
+.form-group input,
+.form-group textarea {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(227, 181, 190, 0.2);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.submit-btn {
+  margin-top: 10px;
+  width: 100%;
+  justify-content: center;
+}
+
+.contact-success {
+  text-align: center;
+  padding: 32px 0;
+}
+
+.success-icon {
+  color: var(--accent-gold);
+  margin-bottom: 16px;
+}
+
+.contact-success h2 {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  color: var(--text-main);
+  margin-bottom: 8px;
+}
+
+.contact-success p {
+  color: var(--text-muted);
+}
