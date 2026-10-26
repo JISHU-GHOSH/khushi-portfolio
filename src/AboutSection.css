@@ -1,0 +1,113 @@
+/* src/AboutSection.css */
+.about-section {
+  position: relative;
+  background: #1b090d;
+  padding: 120px 48px;
+  z-index: 5;
+  border-top: 1px solid rgba(227, 181, 190, 0.1);
+}
+
+.about-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: start;
+}
+
+.about-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 4vw, 3.2rem);
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--text-main);
+  margin-top: 8px;
+  margin-bottom: 24px;
+}
+
+.about-lead {
+  font-size: 1.15rem;
+  color: var(--accent-blush);
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.about-body {
+  font-size: 1rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin-bottom: 36px;
+}
+
+.about-actions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.skills-headline {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--accent-gold);
+  margin-bottom: 24px;
+}
+
+.skills-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.skill-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 24px;
+  backdrop-filter: blur(12px);
+  transition: all 0.3s var(--ease-luxury);
+}
+
+.skill-card:hover {
+  background: var(--bg-card-hover);
+  border-color: rgba(248, 200, 160, 0.35);
+  transform: translateX(4px);
+}
+
+.skill-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.skill-icon {
+  color: var(--accent-gold);
+}
+
+.skill-header h4 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.skill-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.skill-pill {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(227, 181, 190, 0.2);
+  color: var(--text-main);
+}
+
+@media (max-width: 900px) {
+  .about-grid { grid-template-columns: 1fr; gap: 48px; }
+  .about-section { padding: 80px 24px; }
+}
