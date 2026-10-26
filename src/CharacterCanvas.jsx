@@ -1,0 +1,276 @@
+// src/CharacterCanvas.jsx
+import { useRef, useEffect } from 'react';
+import './CharacterCanvas.css';
+
+const NUM_FRAMES = 64;
+const DEADZONE_RADIUS = 0.12;
+const BG_COLOR = '#9c474f';
+const FACE_CENTER_X = 0.50;
+const FACE_CENTER_Y = 0.38;
+
+const FRAME_LERP = 0.22;
+const MAX_FRAME_STEP = 2.8;
+const ASPECT_RATIO = 1920 / 1080;
+
+export {
+  NUM_FRAMES,
+  DEADZONE_RADIUS,
+  BG_COLOR,
+  FACE_CENTER_X,
+  FACE_CENTER_Y,
+  FRAME_LERP,
+  MAX_FRAME_STEP,
+  ASPECT_RATIO,
+};
+
+export default function CharacterCanvas({ className = 'character-canvas' }) {
+  const canvasRef = useRef(null);
+
+  const state = useRef({
+    frames: [],
+    centerImg: null,
+    loaded: 0,
+    totalFrames: NUM_FRAMES + 1,
+    smoothFrame: 0,
+    targetAngle: 0,
+    isCenter: true,
+    rafId: null,
+    mouseX: FACE_CENTER_X,
+    mouseY: FACE_CENTER_Y,
+    isReady: false,
+  });
+
+  // Preload all 65 WebP frames safely
+  useEffect(() => {
+    const s = state.current;
+    let isMounted = true;
+    const framesArray = [];
+
+    const onImageLoaded = () => {
+      if (!isMounted) return;
+      s.loaded++;
+      if (s.loaded >= s.totalFrames) {
+        s.isReady = true;
+      }
+    };
+
+    const baseUrl = import.meta.env.BASE_URL || '/';
+
+    for (let i = 0; i < NUM_FRAMES; i++) {
+      const img = new Image();
+      img.onload = onImageLoaded;
+      img.onerror = onImageLoaded;
+      img.src = `${baseUrl}frames/${String(i).padStart(3, '0')}.webp`;
+      framesArray.push(img);
+    }
+    s.frames = framesArray;
+
+    const center = new Image();
+    center.onload = onImageLoaded;
+    center.onerror = onImageLoaded;
+    center.src = `${baseUrl}frames/center.webp`;
+    s.centerImg = center;
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Mouse & Touch Tracking
+  useEffect(() => {
+    const s = state.current;
+    let isTouching = false;
+    let touchReturnRaf = null;
+
+    const onMove = (e) => {
+      if (window.innerWidth > 0 && window.innerHeight > 0) {
+        s.mouseX = e.clientX / window.innerWidth;
+        s.mouseY = e.clientY / window.innerHeight;
+      }
+    };
+
+    const onTouchStart = (e) => {
+      if (window.scrollY > window.innerHeight * 0.8) return;
+      if (e.touches && e.touches[0] && window.innerWidth > 0 && window.innerHeight > 0) {
+        isTouching = true;
+        if (touchReturnRaf) cancelAnimationFrame(touchReturnRaf);
+        s.mouseX = e.touches[0].clientX / window.innerWidth;
+        s.mouseY = e.touches[0].clientY / window.innerHeight;
+      }
+    };
+
+    const onTouchMove = (e) => {
+      if (window.scrollY > window.innerHeight * 0.8) return;
+      if (e.touches && e.touches[0] && window.innerWidth > 0 && window.innerHeight > 0) {
+        isTouching = true;
+        s.mouseX = e.touches[0].clientX / window.innerWidth;
+        s.mouseY = e.touches[0].clientY / window.innerHeight;
+      }
+    };
+
+    const onTouchEnd = () => {
+      isTouching = false;
+      if (window.scrollY > window.innerHeight * 0.8) return;
+
+      function driftToCenter() {
+        if (isTouching) return;
+        const dx = FACE_CENTER_X - s.mouseX;
+        const dy = FACE_CENTER_Y - s.mouseY;
+        if (Math.abs(dx) > 0.005 || Math.abs(dy) > 0.005) {
+          s.mouseX += dx * 0.12;
+          s.mouseY += dy * 0.12;
+          touchReturnRaf = requestAnimationFrame(driftToCenter);
+        } else {
+          s.mouseX = FACE_CENTER_X;
+          s.mouseY = FACE_CENTER_Y;
+        }
+      }
+      if (touchReturnRaf) cancelAnimationFrame(touchReturnRaf);
+      touchReturnRaf = requestAnimationFrame(driftToCenter);
+    };
+
+    window.addEventListener('mousemove', onMove, { passive: true });
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
+    window.addEventListener('touchcancel', onTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+      window.removeEventListener('touchcancel', onTouchEnd);
+      if (touchReturnRaf) cancelAnimationFrame(touchReturnRaf);
+    };
+  }, []);
+
+  // 60 FPS Render Loop
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+    const s = state.current;
+
+    function resize() {
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      if (W <= 0 || H <= 0) return;
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+    }
+
+    resize();
+    window.addEventListener('resize', resize, { passive: true });
+
+    let last = -1;
+
+    function render(ts) {
+      s.rafId = requestAnimationFrame(render);
+
+      if (last < 0) last = ts;
+      const dt = Math.min(ts - last, 50) / 16.67;
+      last = ts;
+
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+      if (W <= 0 || H <= 0) return;
+
+      const faceCX = W * FACE_CENTER_X;
+      const faceCY = H * FACE_CENTER_Y;
+
+      const cx = s.mouseX * W;
+      const cy = s.mouseY * H;
+      const dx = cx - faceCX;
+      const dy = cy - faceCY;
+
+      const dist = Math.sqrt(dx * dx + dy * dy) / Math.min(W, H);
+      s.isCenter = dist < DEADZONE_RADIUS;
+
+      s.targetAngle = Math.atan2(-dy, dx);
+
+      let normTarget = s.targetAngle % (2 * Math.PI);
+      if (normTarget < 0) normTarget += 2 * Math.PI;
+      const targetFrame = (normTarget / (2 * Math.PI)) * NUM_FRAMES;
+
+      let diff = targetFrame - s.smoothFrame;
+      if (diff > NUM_FRAMES / 2) diff -= NUM_FRAMES;
+      if (diff < -NUM_FRAMES / 2) diff += NUM_FRAMES;
+
+      const lf = 1 - Math.pow(1 - FRAME_LERP, dt);
+      const absDiff = Math.abs(diff);
+      const step = Math.sign(diff) * Math.min(absDiff * Math.max(lf, 0.20), MAX_FRAME_STEP);
+
+      s.smoothFrame = ((s.smoothFrame + step) % NUM_FRAMES + NUM_FRAMES) % NUM_FRAMES;
+      const frameIdx = Math.round(s.smoothFrame) % NUM_FRAMES;
+
+      let img = null;
+      if (s.isCenter && s.centerImg && s.centerImg.complete && s.centerImg.naturalWidth > 0) {
+        img = s.centerImg;
+      } else if (s.frames[frameIdx] && s.frames[frameIdx].complete && s.frames[frameIdx].naturalWidth > 0) {
+        img = s.frames[frameIdx];
+      } else if (s.centerImg && s.centerImg.complete && s.centerImg.naturalWidth > 0) {
+        img = s.centerImg;
+      }
+
+      ctx.fillStyle = BG_COLOR;
+      ctx.fillRect(0, 0, W, H);
+
+      if (img) {
+        try {
+          const iA = (img.naturalWidth && img.naturalHeight)
+            ? (img.naturalWidth / img.naturalHeight)
+            : ASPECT_RATIO;
+          const cA = W / H;
+
+          let dW, dH, dX, dY;
+          if (iA > cA) {
+            dH = H;
+            dW = dH * iA;
+            dX = (W - dW) / 2;
+            dY = 0;
+          } else {
+            dW = W;
+            dH = dW / iA;
+            dX = 0;
+            dY = (H - dH) / 2;
+          }
+
+          ctx.drawImage(img, dX, dY, dW, dH);
+        } catch {
+          // Graceful draw fallback
+        }
+      }
+
+      // Bottom subtle loading bar while preloading
+      if (!s.isReady && s.totalFrames > 0) {
+        const p = Math.min(s.loaded / s.totalFrames, 1);
+        ctx.fillStyle = 'rgba(0,0,0,0.25)';
+        ctx.fillRect(0, H - 3, W, 3);
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.fillRect(0, H - 3, W * p, 3);
+      }
+    }
+
+    s.rafId = requestAnimationFrame(render);
+
+    return () => {
+      if (s.rafId) cancelAnimationFrame(s.rafId);
+      window.removeEventListener('resize', resize);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className={className}
+      aria-label="Interactive character tracking cursor movement"
+      role="img"
+    />
+  );
+}
