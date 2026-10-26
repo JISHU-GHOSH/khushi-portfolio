@@ -206,20 +206,7 @@ export default function CharacterCanvas({ className = 'character-canvas' }) {
       const dy = cy - faceCY;
 
       const dist = Math.sqrt(dx * dx + dy * dy) / Math.min(W, H);
-      // Deadzone smooth dissolve: prevents abrupt snap between eye-contact and directional gaze
-      const deadzoneOuter = DEADZONE_RADIUS * 1.35;
-      const deadzoneInner = DEADZONE_RADIUS * 0.65;
-      let centerAlpha = 0;
-      if (dist < deadzoneInner) {
-        centerAlpha = 1.0;
-        s.isCenter = true;
-      } else if (dist < deadzoneOuter) {
-        centerAlpha = (deadzoneOuter - dist) / (deadzoneOuter - deadzoneInner);
-        s.isCenter = centerAlpha > 0.5;
-      } else {
-        centerAlpha = 0;
-        s.isCenter = false;
-      }
+      s.isCenter = dist < DEADZONE_RADIUS;
 
       s.targetAngle = Math.atan2(-dy, dx);
 
@@ -241,64 +228,46 @@ export default function CharacterCanvas({ className = 'character-canvas' }) {
         : Math.sign(diff) * Math.min(absDiff * lf, maxStep);
 
       s.smoothFrame = ((s.smoothFrame + step) % NUM_FRAMES + NUM_FRAMES) % NUM_FRAMES;
+      const frameIdx = Math.round(s.smoothFrame) % NUM_FRAMES;
 
-      // Sub-frame analog interpolation between adjacent frames (eliminates all discrete stepping)
-      const fVal = ((s.smoothFrame % NUM_FRAMES) + NUM_FRAMES) % NUM_FRAMES;
-      const idxA = Math.floor(fVal);
-      const idxB = (idxA + 1) % NUM_FRAMES;
-      const blendRatio = fVal - idxA;
+      // Always render a single, 100% crisp, pin-sharp frame (zero ghosting, zero haze)
+      let img = null;
+      if (s.isCenter && s.centerImg && s.centerImg.complete && s.centerImg.naturalWidth > 0) {
+        img = s.centerImg;
+      } else if (s.frames[frameIdx] && s.frames[frameIdx].complete && s.frames[frameIdx].naturalWidth > 0) {
+        img = s.frames[frameIdx];
+      } else if (s.centerImg && s.centerImg.complete && s.centerImg.naturalWidth > 0) {
+        img = s.centerImg;
+      }
 
+      ctx.globalAlpha = 1.0;
       ctx.fillStyle = BG_COLOR;
       ctx.fillRect(0, 0, W, H);
 
-      // Helper function to draw an image covering viewport with aspect-ratio preservation
-      function drawCover(image, alpha = 1.0) {
-        if (!image || !image.complete || image.naturalWidth <= 0 || alpha <= 0.001) return;
-        const iA = (image.naturalWidth && image.naturalHeight)
-          ? (image.naturalWidth / image.naturalHeight)
-          : ASPECT_RATIO;
-        const cA = W / H;
+      if (img) {
+        try {
+          const iA = (img.naturalWidth && img.naturalHeight)
+            ? (img.naturalWidth / img.naturalHeight)
+            : ASPECT_RATIO;
+          const cA = W / H;
 
-        let dW, dH, dX, dY;
-        if (iA > cA) {
-          dH = H;
-          dW = dH * iA;
-          dX = (W - dW) / 2;
-          dY = 0;
-        } else {
-          dW = W;
-          dH = dW / iA;
-          dX = 0;
-          dY = (H - dH) / 2;
-        }
-
-        ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
-        ctx.drawImage(image, dX, dY, dW, dH);
-      }
-
-      try {
-        const imgA = s.frames[idxA];
-        const imgB = s.frames[idxB];
-
-        if (centerAlpha >= 0.999 && s.centerImg) {
-          drawCover(s.centerImg, 1.0);
-        } else {
-          // Draw base directional frame A
-          drawCover(imgA, 1.0);
-
-          // Sub-frame cross-blend into frame B for 100% analog continuous rotation
-          if (blendRatio > 0.01) {
-            drawCover(imgB, blendRatio);
+          let dW, dH, dX, dY;
+          if (iA > cA) {
+            dH = H;
+            dW = dH * iA;
+            dX = (W - dW) / 2;
+            dY = 0;
+          } else {
+            dW = W;
+            dH = dW / iA;
+            dX = 0;
+            dY = (H - dH) / 2;
           }
 
-          // Smoothly dissolve center eye-contact frame near deadzone
-          if (centerAlpha > 0.01 && s.centerImg) {
-            drawCover(s.centerImg, centerAlpha);
-          }
+          ctx.drawImage(img, dX, dY, dW, dH);
+        } catch {
+          // Graceful draw fallback
         }
-        ctx.globalAlpha = 1.0;
-      } catch {
-        ctx.globalAlpha = 1.0;
       }
 
       // Bottom subtle loading bar while preloading
