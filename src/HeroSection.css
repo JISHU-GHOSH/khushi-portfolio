@@ -16,7 +16,14 @@
 .hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(22, 7, 10, 0.75) 0%, rgba(22, 7, 10, 0.15) 20%, transparent 40%);
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    transparent 55%,
+    rgba(22, 7, 10, 0.20) 75%,
+    rgba(22, 7, 10, 0.75) 90%,
+    var(--bg-deep) 100%
+  );
   pointer-events: none;
   z-index: 2;
 }
@@ -234,4 +241,16 @@
   .hero-content { left: 5%; bottom: 6%; }
   .hero-title { font-size: 4rem; }
   .scroll-indicator { display: none; }
+}
+
+/* Atmospheric organic transition from canvas into deep velvet wine */
+.portfolio-content {
+  position: relative;
+  z-index: 10;
+  background:
+    radial-gradient(ellipse 100% 60% at 85% 0%, rgba(156, 71, 79, 0.35) 0%, transparent 65%),
+    radial-gradient(ellipse 80% 50% at 15% 15%, rgba(248, 200, 160, 0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 90% 50% at 85% 45%, rgba(156, 71, 79, 0.22) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 40% at 10% 75%, rgba(248, 200, 160, 0.07) 0%, transparent 50%),
+    var(--bg-deep);
 }
